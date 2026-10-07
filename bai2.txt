@@ -1,0 +1,16 @@
+<FILENAME>README.md</FILENAME>
+<CODE>
+# Báo cáo Bài 2: Cấu hình phân quyền Nhóm và sudoers bằng visudo
+
+## 1. Thao tác thực hiện
+
+### Bước 1: Tạo nhóm người dùng `devops-admin` và user `deployer`
+```bash
+# Tạo nhóm devops-admin
+sudo groupadd devops-admin
+
+# Tạo user deployer
+sudo adduser deployer
+
+# Thêm user deployer vào nhóm devops-admin
+sudo usermod -aG devops-admin deployer
