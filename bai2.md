@@ -1,92 +1,93 @@
-# Hướng dẫn hoàn thành Bài 4 và đẩy code lên GitHub
+# Hướng dẫn hoàn thành Bài 2: Cấu hình phân quyền Nhóm và sudoers
 
-Các bước dưới đây sẽ giúp bạn tạo các tệp cần thiết, thực hiện các lệnh yêu cầu và đẩy kết quả lên thư mục `homework/session_06/ex4/` trên GitHub.
+## Bước 1: Tạo nhóm và người dùng mới
 
-## Bước 1: Tạo cấu trúc thư mục
-Mở Terminal và tạo thư mục bài tập theo đúng đường dẫn yêu cầu, sau đó di chuyển vào thư mục đó:
+Mở Terminal và chạy lần lượt các lệnh sau (nhập mật khẩu root của bạn nếu được yêu cầu):
+
 ```bash
-mkdir -p homework/session_06/ex4
-cd homework/session_06/ex4
+# Tạo nhóm devops-admin
+sudo groupadd devops-admin
+
+# Tạo tài khoản deployer (hệ thống sẽ yêu cầu bạn thiết lập mật khẩu cho user này)
+sudo adduser deployer
+
+# Thêm user deployer vào nhóm devops-admin
+sudo usermod -aG devops-admin deployer
 ```
 
-## Bước 2: Tạo và cấp quyền cho shell script
-Tạo file `loop-monitor.sh` bằng lệnh `cat` và cấp quyền thực thi:
-```bash
-cat << 'EOF' > loop-monitor.sh
-#!/bin/bash
-while true; do
-    echo "System time: $(date)" >> /tmp/monitor.log
-    sleep 5
-done
-EOF
+## Bước 2: Cấu hình tệp sudoers bằng visudo
 
-chmod +x loop-monitor.sh
+1. Mở tệp cấu hình sudoers:
+```bash
+sudo visudo
 ```
+2. Di chuyển con trỏ chuột xuống cuối tệp tin và thêm chính xác dòng sau vào:
+```text
+%devops-admin ALL=(ALL) NOPASSWD: /usr/bin/systemctl start *, /usr/bin/systemctl stop *, /usr/bin/systemctl restart *, /usr/bin/systemctl status *
+```
+3. Lưu và thoát (Nếu dùng `nano` bên trong visudo: Nhấn `Ctrl+O` -> `Enter` để lưu, sau đó `Ctrl+X` để thoát).
 
-## Bước 3: Chạy kịch bản dưới nền và kiểm tra
-1. Khởi chạy kịch bản bằng `nohup`:
-```bash
-nohup ./loop-monitor.sh > /dev/null 2>&1 &
-```
-2. Lấy PID (Số định danh tiến trình) của script:
-```bash
-pgrep -f loop-monitor.sh
-```
-*(Ghi nhớ số PID hiện ra để đưa vào báo cáo và sử dụng ở bước sau)*
+## Bước 3: Kiểm tra cấu hình
 
-3. Kiểm tra log để xem kịch bản có đang ghi dữ liệu không:
+1. Chuyển sang tài khoản `deployer`:
 ```bash
-tail -n 10 /tmp/monitor.log
+su - deployer
 ```
+2. Kiểm tra quyền `sudo`:
+```bash
+sudo -l
+```
+*(Hãy copy toàn bộ kết quả hiển thị trên màn hình của lệnh này để lát nữa dán vào file báo cáo README.md)*
 
-## Bước 4: Tắt tiến trình
-Sử dụng số PID bạn vừa lấy được ở trên để tắt tiến trình một cách an toàn bằng tín hiệu `SIGTERM` (15):
+3. Chạy thử lệnh khởi động lại dịch vụ `cron` (sẽ không bị hỏi mật khẩu):
 ```bash
-kill -15 <PID_CUA_TIEN_TRINH>
+sudo systemctl restart cron
 ```
-Kiểm tra lại xem tiến trình đã tắt chưa:
+4. Gõ `exit` để thoát khỏi user `deployer`, quay lại user ban đầu của bạn:
 ```bash
-ps aux | grep loop-monitor.sh
+exit
 ```
 
-## Bước 5: Tạo tệp báo cáo README.md
-Tạo tệp `README.md` theo yêu cầu của bài tập để ghi lại các lệnh và kết quả. (Bạn hãy thay `<PID_CUA_TIEN_TRINH>` bằng con số thực tế lúc bạn chạy).
+## Bước 4: Tạo cấu trúc thư mục và tệp báo cáo README.md
+
+Tạo thư mục bài tập và tệp báo cáo `README.md` theo yêu cầu:
+
+```bash
+mkdir -p homework/session_06/ex2
+cd homework/session_06/ex2
+```
+
+Tạo file `README.md` (Bạn nhớ thay thế phần `[DÁN KẾT QUẢ...]` bằng nội dung bạn đã copy ở Bước 3):
 
 ```bash
 cat << 'EOF' > README.md
-# Báo cáo Bài 4: Quản lý tiến trình nền với nohup và tín hiệu Kill
+# Báo cáo Bài 2: Cấu hình phân quyền Nhóm và sudoers bằng visudo
 
-## 1. Lệnh khởi chạy nohup
-\`\`\`bash
-nohup ./loop-monitor.sh > /dev/null 2>&1 &
-\`\`\`
+## 1. Kết quả chạy lệnh `sudo -l` khi đăng nhập bằng user deployer:
 
-## 2. Kết quả tail file log
-\`\`\`bash
-tail -n 10 /tmp/monitor.log
-# (Kết quả trả về hiển thị dòng "System time: ...")
-\`\`\`
+```text
+[DÁN KẾT QUẢ COPY TỪ LỆNH SUDO -L VÀO ĐÂY]
+```
 
-## 3. Lệnh kill kèm PID
-\`\`\`bash
-pgrep -f loop-monitor.sh
-# PID trả về ví dụ: 12345
-kill -15 12345
-\`\`\`
+## 2. Dòng cấu hình đã thêm vào sudoers:
+
+```text
+%devops-admin ALL=(ALL) NOPASSWD: /usr/bin/systemctl start *, /usr/bin/systemctl stop *, /usr/bin/systemctl restart *, /usr/bin/systemctl status *
+```
 EOF
 ```
 
-## Bước 6: Commit và Push lên GitHub
-Thực hiện chuỗi lệnh Git sau để đẩy thư mục `homework/session_06/ex4/` lên kho lưu trữ của bạn:
+## Bước 5: Commit và Push lên GitHub
+
+Cuối cùng, đẩy kết quả lên kho lưu trữ GitHub của bạn:
 
 ```bash
-# Thêm toàn bộ các thay đổi trong thư mục hiện tại
-git add .
+# Thêm file báo cáo vào git
+git add README.md
 
-# Ghi lại commit với thông điệp rõ ràng
-git commit -m "Hoàn thành Bài 4: Quản lý tiến trình với nohup và kill"
+# Ghi lại commit
+git commit -m "Hoàn thành Bài 2: Cấu hình phân quyền devops-admin trong sudoers"
 
-# Đẩy code lên nhánh hiện tại trên GitHub (ví dụ nhánh main)
+# Đẩy code lên GitHub (thay 'main' bằng nhánh của bạn nếu cần)
 git push origin main
 ```
-*(Lưu ý: Nếu bạn đang làm việc trên nhánh khác, hãy thay `main` bằng tên nhánh của bạn).*
