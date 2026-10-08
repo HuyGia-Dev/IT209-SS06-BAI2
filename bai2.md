@@ -76,18 +76,3 @@ cat << 'EOF' > README.md
 ```
 EOF
 ```
-
-## Bước 5: Commit và Push lên GitHub
-
-Cuối cùng, đẩy kết quả lên kho lưu trữ GitHub của bạn:
-
-```bash
-# Thêm file báo cáo vào git
-git add README.md
-
-# Ghi lại commit
-git commit -m "Hoàn thành Bài 2: Cấu hình phân quyền devops-admin trong sudoers"
-
-# Đẩy code lên GitHub (thay 'main' bằng nhánh của bạn nếu cần)
-git push origin main
-```
